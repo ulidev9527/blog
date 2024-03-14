@@ -113,7 +113,7 @@ keywords:
     -p 8000:8000 -p 9443:9443 -p 9000:9000 \
     --name portainer_temp_runtime \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    -v sys_portainer_data:/data \
+    -v portainer_data:/data \
     portainer/portainer-ce:latest
     ```
 
