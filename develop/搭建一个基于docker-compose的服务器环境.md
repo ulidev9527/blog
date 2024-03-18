@@ -1,18 +1,3 @@
----
-title: 搭建一个基于docker-compose的服务器环境
-date: 2023.03.
-update: 
-    - 2024.03.08
-    - 2024.03.12
-    - 2024.03.13
-keywords: 
-  - docker
-  - docker compose
-  - portainer
-  - nginx proxy manager
-  - dns server
----
-
 # 搭建一个基于docker-compose的服务器环境
 
 工作中巧合下重拾服务器开发，所以觉得稍微细致的准备一下。  
@@ -22,7 +7,10 @@ keywords:
 ## 核心内容
 - 容器管理 [Portainer](https://www.portainer.io) 安装使用
 - 代理管理 [nginx proxy manager](https://nginxproxymanager.com) 安装使用
-- bind DN S服务 [sameersbn/docker-bind](https://github.com/sameersbn/docker-bind) 安装使用
+- DNS服务 [sameersbn/docker-bind](https://github.com/sameersbn/docker-bind) 安装使用
+- 容器日志收集 [Grafana Loki](https://grafana.com/oss/loki/) 安装和使用
+
+`docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions`
 
 ## 准备
 - 阅读前可以参考[VirtualBox虚拟机安装Ubuntu22.0.4.server](./VirtualBox虚拟机安装Ubuntu22.0.4.server.md)准备一个虚拟机环境。
@@ -141,7 +129,7 @@ keywords:
 - 拉取镜像
     - `docker pull portainer/helper-reset-password`
 - 查看密码
-    - `$ docker run --rm -v /var/lib/docker/volumes/sys_portainer_data/_data:/data portainer/helper-reset-password`
+    - `$ docker run --rm -v /var/lib/docker/volumes/portainer_data/_data:/data portainer/helper-reset-password`
     - 输出  
         ```
         {"level":"info","filename":"portainer.db","time":"2024-02-22T14:29:46Z","message":"loading PortainerDB"}
@@ -274,8 +262,59 @@ keywords:
     - 搜索本文: `配置反向代理` 中的 `bind DNS: bind.self.local`
 - 再按文中 `关闭临时的 portainer, 启动 docker-compose 配置的 portainer` 一节中的方案重启 `portainer`
 
+### 日志收集 [Grafana Loki](https://grafana.com/oss/loki/) 安装
+#### 准备必要资源
+```
+docker pull grafana/loki:2.9.4
+docker pull grafana/promtail:2.9.4'
+docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions
+```
+
+#### 修改 `daemon.json`
+```
+cat > /etc/docker/daemon.json <<EOF
+{
+    "registry-mirrors": [
+        "https://hub-mirror.c.163.com",
+        "https://mirror.baidubce.com",
+        "https://ccr.ccs.tencentyun.com"
+    ],
+    "log-driver": "loki",
+    "log-opts": {        
+        "loki-url": "http://localhost:3100/loki/api/v1/push",
+        "max-size": "10m",
+        "max-file": "10",
+        "loki-max-backoff": "800ms",
+        "keep-file": "true",
+        "loki-timeout": "1s"
+    }
+}
+EOF
+```
+#### 启动相关容器
+- [复制内容](https://github.com/ulidev9527/docker-compose-template/blob/main/grafana/grafana.and.loki.yaml)到 `portainer`并启动
+- 在 `nginx proxy manager` 里面配置代理
+    - 添加 `http://grafana.self.local`
+        - 服务名: `grafana`
+        - 端口: 3000
+- 访问 `http://grafana.self.local`
+    - 默认账号密码： `admin` `admin`
+- 配置可视化
+    - `Home > Connections > Data sources`
+    - 点击右上的 `add new date source`
+    - 搜索 `loki` 点击进入
+    - 在 `url` 处填写 `http://loki:3100`
+    - 点击最下边 `save & test` 按钮进行保存
+- 查看可视化界面
+    - `Home > Explore` 里面可以看到刚才配置的 `loki` 日志
+
+
+#### 重启 `docker`
+`systemctl restart docker`
+
 ### 访问
 
 - `portainer`: [protainer.self.local](http://protainer.self.local)
 - `nginxProxyManager`: [nginx.self.local](http://nginx.self.local)
 - `bind DNS`: [bind.self.local](http://bind.self.local)
+- `grafana`: [grafana.self.local](http://grafana.self.local)
