@@ -265,6 +265,7 @@
 ```
 docker pull grafana/loki:2.9.4
 docker pull grafana/promtail:2.9.4'
+docker pull grafana/grafana:lates
 docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions
 ```
 
