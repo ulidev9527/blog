@@ -10,8 +10,6 @@
 - DNS服务 [sameersbn/docker-bind](https://github.com/sameersbn/docker-bind) 安装使用
 - 容器日志收集 [Grafana Loki](https://grafana.com/oss/loki/) 安装和使用
 
-`docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions`
-
 ## 准备
 - 阅读前可以参考[VirtualBox虚拟机安装Ubuntu22.0.4.server](./VirtualBox虚拟机安装Ubuntu22.0.4.server.md)准备一个虚拟机环境。
 - 本篇文章使用的服务器是: [Ubuntu 22.0.4](https://ubuntu.com)  
