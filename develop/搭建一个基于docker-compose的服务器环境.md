@@ -204,7 +204,7 @@
     nameserver 127.0.0.1 # 自建 DNS
     search .
     EOF
-        ```
+    ```
 #### 创建
 - 参考上面: 使用 docker-compose 创建
 - 配置文件参考: [https://github.com/ulidev9527/docker-compose-template/blob/main/bind/bind.yml](https://github.com/ulidev9527/docker-compose-template/blob/main/bind/bind.yml)
@@ -298,6 +298,8 @@ EOF
         - 端口: 3000
 - 访问 `http://grafana.self.local`
     - 默认账号密码： `admin` `admin`
+-  重启 `docker`
+    - `systemctl restart docker`
 - 配置可视化
     - `Home > Connections > Data sources`
     - 点击右上的 `add new date source`
@@ -306,10 +308,7 @@ EOF
     - 点击最下边 `save & test` 按钮进行保存
 - 查看可视化界面
     - `Home > Explore` 里面可以看到刚才配置的 `loki` 日志
-
-
-#### 重启 `docker`
-`systemctl restart docker`
+    - **注: 如果容器在安装 `Grafana Loki` 之前创建的，需要重新创建日志才会生效**
 
 ### 访问
 
