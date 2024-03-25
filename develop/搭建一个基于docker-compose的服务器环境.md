@@ -178,7 +178,7 @@
     - 点击 `Save` 按钮存储
     - 退出创建界面后，服务的 `Status` 为 `Online` 表示正常, 如果不正常可以查看容器日志
 #### 注意事项
-- `docker`重启后或者服务器重启后, 如果`nginx proxy manager`配置的代理服务没有启动，可能导致 `nginx proxy manager` 启动失败, 此时你需要使用 `docker` 命令启动其它关联服务的容器再启动`nginx proxy manager`容器即可
+- `docker`重启后或者服务器重启后, 如果`nginx proxy manager`配置的代理服务没有启动，可能导致 `nginx proxy manager` 内部的 `*.conf` 验证失败, 此时你需要使用 `docker` 命令启动其它关联服务的容器再启动`nginx proxy manager`容器即可
 
 
 ###  bind DNS 服务 [sameersbn/docker-bind](https://github.com/sameersbn/docker-bind) 安装
@@ -308,7 +308,9 @@ EOF
     - 点击最下边 `save & test` 按钮进行保存
 - 查看可视化界面
     - `Home > Explore` 里面可以看到刚才配置的 `loki` 日志
-    - **注: 如果容器在安装 `Grafana Loki` 之前创建的，需要重新创建日志才会生效**
+#### 注意
+- 注: 如果容器在安装 `Grafana Loki` 之前创建的，需要重新创建日志才会生效
+- 建议打印日志直接打印到一行, 不要用多行日志，多行日志需要特殊处理: [https://grafana.com/docs/loki/latest/send-data/promtail/stages/multiline/](https://grafana.com/docs/loki/latest/send-data/promtail/stages/multiline/)
 
 ### 访问
 
