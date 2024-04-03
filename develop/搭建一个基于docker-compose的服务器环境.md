@@ -70,10 +70,14 @@
             "https://mirror.baidubce.com",
             "https://ccr.ccs.tencentyun.com"
         ],
-        "log-driver": "local",
-        "log-opts": {
+        "log-driver": "loki",
+        "log-opts": {        
+            "loki-url": "http://localhost:3100/loki/api/v1/push",
             "max-size": "10m",
-            "max-file": "10"
+            "max-file": "10",
+            "loki-max-backoff": "800ms",
+            "keep-file": "true",
+            "loki-timeout": "1s"
         }
     }
     EOF
@@ -89,6 +93,10 @@
     docker pull portainer/portainer-ce:latest
     docker pull jc21/nginx-proxy-manager:latest
     docker pull sameersbn/bind:latest
+    docker pull grafana/loki:2.9.4
+    docker pull grafana/promtail:2.9.4
+    docker pull grafana/grafana-enterprise:latest
+    docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions
     ```
 
 ### 容器管理 [Portainer](https://www.portainer.io) 安装
@@ -117,7 +125,7 @@
 - **注: 这一步在文章后面的 `nginx proxy manager` 创建 和 `bind DNS 服务` 创建完成后执行**
 - 切换到服务器命令行
     - `$ docker stop portainer_temp_runtime`
-    - `$ docker restart portainer`
+    - `$ docker restart [对应的 portainer 容器]`
     - 访问[http://portainer.self.local](http://portainer.self.local)
         - 这个域名需要后面的 `bind DNS 服务` 创建和配置完成后即可使用
 #### 如果忘记 `portainer` 密码  
@@ -138,7 +146,7 @@
             - `Password successfully updated for user: admin` 中的 `admin` 是账号
             - `... Use the following password to login: ****` 中的 `****` 是密码  
 - 启动 `portainer`容器
-    - `$ docker start portainer容器名`
+    - `$ docker start [对应的 portainer 容器]`
 - 访问`portainer`对应地址,输入账号密码登陆
 
 ### 代理管理 [nginx proxy manager](https://nginxproxymanager.com) 安装
@@ -212,11 +220,9 @@
         - `BIND_HOST`: `bind.self.local`
         - `BIND_ROOT_PASSWORD`: `123!@#abcABC`
             - 这里密码自定义, 账号是 `root`
-- 域名访问  
-    - 将本机 `host` 文件中添加域名解析 `服务器IP bind.self.local`
-    - 访问 [http://bind.self.local](http://bind.self.local)
+- 访问  
+    - `http//:服务器IP:10000`
     - 账号: `root` 密码: 是 `BIND_ROOT_PASSWORD` 环境变量
-    - 登陆后, 域名会被添加一个 `:10000` 的端口号, 去掉端口号重新访问域名进入管理界面
 
 - `DNS` 服务配置  
     - 创建 `DNS` 解析
@@ -249,11 +255,13 @@
         - 添加 IP `8.8.8.8` `8.8.4.4`, 这个是第三方 `dns` 解析添加，可以解析非自定义的一些域名
         - `Save` 按钮保存
     - 重启
-        - 界面右上有应用配置按钮，点击按钮应用，也可以直接 `$ docker restart bind` 重启容器。
+        - `$ docker restart bind`
+        - `$ docker restart nginxproxymanager`
 #### 电脑修改 `DNS`
 - 各系统修改 `DNS` 解析都不一样, 自行搜索解析教程
 - 修改后刷新一下 `DNS`, 自行搜索教程
 - 浏览器输入对应域名测试解析情况, 也可以使用 `dig` / `host` / `ping` / `curl` 等方法测试, 自行搜索教程
+- 完成后即可进行域名访问
 
 #### 回头配置上面未配置的内容
 - 先添加 `bind DNS` 的方向代理
@@ -261,35 +269,7 @@
 - 再按文中 `关闭临时的 portainer, 启动 docker-compose 配置的 portainer` 一节中的方案重启 `portainer`
 
 ### 日志收集 [Grafana Loki](https://grafana.com/oss/loki/) 安装
-#### 准备必要资源
-```
-docker pull grafana/loki:2.9.4
-docker pull grafana/promtail:2.9.4
-docker pull grafana/grafana-enterprise:latest
-docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions
-```
 
-#### 修改 `daemon.json`
-```
-cat > /etc/docker/daemon.json <<EOF
-{
-    "registry-mirrors": [
-        "https://hub-mirror.c.163.com",
-        "https://mirror.baidubce.com",
-        "https://ccr.ccs.tencentyun.com"
-    ],
-    "log-driver": "loki",
-    "log-opts": {        
-        "loki-url": "http://localhost:3100/loki/api/v1/push",
-        "max-size": "10m",
-        "max-file": "10",
-        "loki-max-backoff": "800ms",
-        "keep-file": "true",
-        "loki-timeout": "1s"
-    }
-}
-EOF
-```
 #### 启动相关容器
 - [复制内容](https://github.com/ulidev9527/docker-compose-template/blob/main/grafana/grafana.and.loki.yaml)到 `portainer`并启动
 - 在 `nginx proxy manager` 里面配置代理
@@ -298,6 +278,7 @@ EOF
         - 端口: 3000
 - 访问 `http://grafana.self.local`
     - 默认账号密码： `admin` `admin`
+    - 配置新密码
 -  重启 `docker`
     - `systemctl restart docker`
 - 配置可视化
@@ -309,7 +290,19 @@ EOF
 - 查看可视化界面
     - `Home > Explore` 里面可以看到刚才配置的 `loki` 日志
 #### 注意
-- 注: 如果容器在安装 `Grafana Loki` 之前创建的，需要重新创建日志才会生效
+- 注: 如果容器在安装 `Grafana Loki` 之前创建的，需要在 `portainer` 的 `Stacks` 中重新创建日志才会生效
+    - 重启临时的 `portainer`
+        - `$ docker stop [对应的 portainer 容器]`
+        - `$ docker start portainer_temp_runtime`
+    - 访问: `https://服务器IP:9443`
+    - 在 `Containers` 全选，其中`portainer_temp_runtime`不选，然后删除.
+    - 进入 `Stacks`, 按照 `bind > portainer > grafana_and_loki > nginx` 的顺序进去，在每个`Stack` 的 `Editor` 中点击 `Update the stack` 即可
+        - 过程中可以考虑关闭 `bind` 的 `10000` 和 `nginxproxymanager` 的 `81` 减少端口暴露。
+        - 创建后账号密码和配置不会丢失。
+    - 完成后执行
+        - `$ docker stop portainer_temp_runtime`
+        - `$ docker restart [对应的 portainer 容器]`
+    - 访问 `http://grafana.self.local` 即可查看日志
 - 建议打印日志直接打印到一行, 不要用多行日志，多行日志需要特殊处理: [https://grafana.com/docs/loki/latest/send-data/promtail/stages/multiline/](https://grafana.com/docs/loki/latest/send-data/promtail/stages/multiline/)
 
 ### 访问
