@@ -66,9 +66,7 @@
     cat > /etc/docker/daemon.json <<EOF
     {
         "registry-mirrors": [
-            "https://hub-mirror.c.163.com",
-            "https://mirror.baidubce.com",
-            "https://ccr.ccs.tencentyun.com"
+            "https://hub-mirror.c.163.com"
         ]
     }
     EOF
@@ -94,9 +92,7 @@
     cat > /etc/docker/daemon.json <<EOF
     {
         "registry-mirrors": [
-            "https://hub-mirror.c.163.com",
-            "https://mirror.baidubce.com",
-            "https://ccr.ccs.tencentyun.com"
+            "https://hub-mirror.c.163.com"
         ],
         "log-driver": "loki",
         "log-opts": {        
