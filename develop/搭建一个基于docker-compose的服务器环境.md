@@ -69,16 +69,7 @@
             "https://hub-mirror.c.163.com",
             "https://mirror.baidubce.com",
             "https://ccr.ccs.tencentyun.com"
-        ],
-        "log-driver": "loki",
-        "log-opts": {        
-            "loki-url": "http://localhost:3100/loki/api/v1/push",
-            "max-size": "10m",
-            "max-file": "10",
-            "loki-max-backoff": "800ms",
-            "keep-file": "true",
-            "loki-timeout": "1s"
-        }
+        ]
     }
     EOF
     ```
@@ -98,6 +89,31 @@
     docker pull grafana/grafana-enterprise:latest
     docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions
     ```
+- 修改配置
+    ```
+    cat > /etc/docker/daemon.json <<EOF
+    {
+        "registry-mirrors": [
+            "https://hub-mirror.c.163.com",
+            "https://mirror.baidubce.com",
+            "https://ccr.ccs.tencentyun.com"
+        ],
+        "log-driver": "loki",
+        "log-opts": {        
+            "loki-url": "http://localhost:3100/loki/api/v1/push",
+            "max-size": "10m",
+            "max-file": "10",
+            "loki-max-backoff": "800ms",
+            "keep-file": "true",
+            "loki-timeout": "1s"
+        }
+    }
+    EOF
+    ```
+
+- 重启 `docker`
+    - 重启主要是更新配置
+    - `$ sudo systemctl restart docker`
 
 ### 容器管理 [Portainer](https://www.portainer.io) 安装
 #### 临时的 [Portainer](https://www.portainer.io) 服务  
