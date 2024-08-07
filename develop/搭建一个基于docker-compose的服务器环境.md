@@ -59,7 +59,7 @@
     Version:          25.0.3
     ....
     ```
-- 修改 `docker` 配置  
+~~- 修改 `docker` 配置  
     - 内容主要是添加国内镜像和日志切割
     - **如果文件已存在需要进行手动修改**
     ```
@@ -70,7 +70,7 @@
         ]
     }
     EOF
-    ```
+    ```~~  国内镜像G了
 - 创建默认网络 `$ docker network create net_def`  
     - 命令创建可能会导致和云服务器之间的 `IP` 段冲突，必要情况下可以[根据文档](https://docs.docker.com/network/)配置 `IP` 段。
 
@@ -87,13 +87,10 @@
     docker pull grafana/grafana-enterprise:latest
     docker plugin install grafana/loki-docker-driver:2.9.4 --alias loki --grant-all-permissions
     ```
-- 修改配置
+- 修改配置 
     ```
     cat > /etc/docker/daemon.json <<EOF
     {
-        "registry-mirrors": [
-            "https://hub-mirror.c.163.com"
-        ],
         "log-driver": "loki",
         "log-opts": {        
             "loki-url": "http://localhost:3100/loki/api/v1/push",
