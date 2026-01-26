@@ -9,7 +9,8 @@
 
 - [开发日志](./develop/readme.md) *程序开发生涯中的一些技术积累/经验/教程等相关干货文档.*
     - [VirtualBox虚拟机安装Ubuntu22.0.4.server](./develop/VirtualBox虚拟机安装Ubuntu22.0.4.server.md)
-    - [搭建一个基于docker-compose的服务器环境](./develop/搭建一个基于docker-compose的服务器环境.md)
+    - ~~[搭建一个基于docker-compose的服务器环境](./develop/搭建一个基于docker-compose的服务器环境.md)~~
+    - [快速搭建一个容器化环境的服务器](./develop/快速搭建一个容器化环境的服务器.md)
 - [生活笔记](./life/readme.md) *个人生活上的一些总结/感受/小作文等一些生活方面的记录.*
 - [关于我](./about/readme.md) *个人的一些信息公开*
 
