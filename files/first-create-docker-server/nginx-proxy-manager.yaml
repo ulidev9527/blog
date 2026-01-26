@@ -1,0 +1,29 @@
+networks:
+  basicnet:
+    external: true
+  
+services:
+  nginx-proxy-manager:
+    image: jc21/nginx-proxy-manager:2.13.6
+    networks:
+      - basicnet
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host # 关键配置
+      - target: 81
+        published: 81
+        protocol: tcp
+        mode: host # 关键配置
+      - target: 443
+        published: 443
+        protocol: tcp
+        mode: host # 关键配置
+    volumes:
+      - /data/nginx-proxy-manager-data:/data
+      - /data/nginx-proxy-manager-letsencrypt:/etc/letsencrypt
+    deploy:
+        placement:
+          constraints:
+            - node.hostname==${MASTER_HOSTNAME}

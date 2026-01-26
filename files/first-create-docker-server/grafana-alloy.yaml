@@ -1,0 +1,30 @@
+networks:
+  basicnet:
+    external: true
+
+services:
+  grafana-alloy:
+    image: grafana/alloy:v1.12.2
+    volumes:
+      - /data/grafana-alloy-config:/etc/alloy:ro
+      - /data/grafana-alloy-data:/var/lib/alloy/data
+      - /data/nginx-proxy-manager-data/logs:/data/nginx-proxy-manager-data/logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/host/root:ro
+    command: |
+      run 
+      --server.http.listen-addr=0.0.0.0:12345 
+      --storage.path=/var/lib/alloy/data 
+      /etc/alloy
+    # ports:
+    #   - 12345
+    networks:
+      - basicnet
+    environment:
+      - HOSTNAME={{.Node.Hostname}}
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.platform.os == linux]

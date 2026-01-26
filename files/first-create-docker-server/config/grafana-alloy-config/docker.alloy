@@ -1,0 +1,80 @@
+discovery.docker "docker" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+}
+
+//----------------- 日志 ⬇️
+discovery.relabel "docker_logs"{
+  targets = []
+ // 1. 默认提取容器名（作为保底）
+    rule {
+        source_labels = ["__meta_docker_container_name"]
+        regex         = "/(.*)"
+        target_label  = "container"
+    }
+
+    // 2. 如果是 Swarm Service，覆盖 container 标签为服务名
+    // Swarm 会自动注入 com.docker.swarm.service.name 这个 Label
+    rule {
+        source_labels = ["__meta_docker_container_label_com_docker_swarm_service_name"]
+        regex         = "(.+)"
+        target_label  = "container"
+    }
+
+    // 3. 提取 Swarm 任务 ID (可选，用于区分同一个服务的不同副本)
+    rule {
+      source_labels = ["__meta_docker_container_label_com_docker_swarm_task_name"]
+      regex         = "(.+)"
+      target_label  = "swarm_task"
+    }
+
+    // 4. 注入统一的实例名（宿主机名）
+    rule {
+      replacement  = sys.env("HOSTNAME")
+      target_label = "instance"
+    }
+}
+loki.source.docker "docker" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.docker.targets
+  relabel_rules = discovery.relabel.docker_logs.rules
+  forward_to    = [loki.write.master_loki.receiver]
+}
+//----------------- 日志 ⬆️
+
+prometheus.exporter.unix "unix" {
+    procfs_path = "/host/proc"
+    sysfs_path  = "/host/sys"
+    rootfs_path = "/host/root"
+}
+prometheus.exporter.cadvisor "cadvisor" {
+  docker_host = "unix:///var/run/docker.sock"
+  storage_duration = "5m"
+  docker_only = true
+}
+
+// 抓取并合并所有指标
+prometheus.scrape "docker" {
+    targets = concat(
+        prometheus.exporter.unix.unix.targets,
+        prometheus.exporter.cadvisor.cadvisor.targets,
+    )
+
+    scrape_interval = "10s"
+
+    forward_to = [ prometheus.relabel.docker_relabel.receiver ]
+}
+
+// 为所有指标注入统一的实例标签
+prometheus.relabel "docker_relabel" {
+    rule {
+        target_label = "job"
+        replacement  = "docker"
+    }
+
+    rule {
+        replacement  = sys.env("HOSTNAME")
+        target_label = "instance"
+    }
+    forward_to = [prometheus.remote_write.master_prometheus.receiver]
+}

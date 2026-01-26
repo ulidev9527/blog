@@ -1,0 +1,13 @@
+// 查
+local.file_match "nginx_log" {
+    path_targets = [
+        { "__path__" = "/data/nginx-proxy-manager-data/logs/*.log", "job" = "nginx_log", "hostname" = sys.env("HOSTNAME"), },
+    ]
+    sync_period = "5s"
+}
+
+loki.source.file "npm_scrape" {
+    targets       = local.file_match.nginx_log.targets
+    forward_to    = [loki.write.master_loki.receiver]
+    // tail_from_end = true // 如果需要从文件末尾开始读取，可以取消注释
+}

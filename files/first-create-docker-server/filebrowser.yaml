@@ -1,0 +1,22 @@
+networks:
+  basicnet:
+    external: true
+
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:v2.55.0
+    restart: always
+    user: root
+    privileged: true  # 启用特权模式
+    deploy:
+      placement:
+        constraints:
+          - node.hostname==${MASTER_HOSTNAME}
+    volumes:
+      - /:/srv
+      - /data/filebrowser-config:/config
+      - /data/filebrowser-database:/database
+    networks:
+      - basicnet
+    # ports:
+      # - 80

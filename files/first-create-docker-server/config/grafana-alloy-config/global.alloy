@@ -1,0 +1,17 @@
+livedebugging {
+  enabled = true
+}
+
+// prometheus 写入端口
+prometheus.remote_write "master_prometheus" {
+    endpoint {
+        url = "http://prometheus:9090/api/v1/write"
+    }
+}
+
+// 定义 Loki 写入端
+loki.write "master_loki" {
+    endpoint {
+        url = "http://grafana-loki:3100/loki/api/v1/push"
+    }
+}

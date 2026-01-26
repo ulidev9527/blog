@@ -1,0 +1,18 @@
+networks:
+  basicnet:
+    external: true
+
+services:
+  grafana:
+    image: grafana/grafana:12.3.1
+    user: "0"
+    volumes:
+      - '/data/grafana-data:/var/lib/grafana'
+    # ports:
+      # - 3000
+    networks:
+      - basicnet
+    deploy:
+        placement:
+          constraints:
+            - node.hostname==${MASTER_HOSTNAME}
