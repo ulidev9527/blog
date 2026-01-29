@@ -27,3 +27,23 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+
+  # 容器资源监控
+  cadvisor:
+    image: ghcr.io/google/cadvisor:0.56.2
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/run/docker/containerd/containerd.sock:/run/containerd/containerd.sock:ro # !! 这里是 alpine 的位置， 注意各个 linux 系统位置不一样
+    # ports:
+    #   - 8080:8080
+    networks:
+      - basicnet
+    command: |
+      --docker_only=true
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.platform.os == linux]

@@ -1,0 +1,27 @@
+prometheus.exporter.unix "unix" {
+    procfs_path = "/host/proc"
+    sysfs_path  = "/host/sys"
+    rootfs_path = "/host/root"
+}
+
+
+// 抓取并合并所有指标
+prometheus.scrape "unix" {
+    targets =  prometheus.exporter.unix.unix.targets
+    scrape_interval = "10s"
+    forward_to = [ prometheus.relabel.unix_relabel.receiver ]
+}
+
+// 为所有指标注入统一的实例标签
+prometheus.relabel "unix_relabel" {
+    rule {
+        target_label = "job"
+        replacement  = "docker"
+    }
+
+    rule {
+        replacement  = sys.env("HOSTNAME")
+        target_label = "instance"
+    }
+    forward_to = [prometheus.remote_write.master_prometheus.receiver]
+}

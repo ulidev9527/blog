@@ -1,0 +1,29 @@
+// 1. 发现本地节点上的 cAdvisor
+discovery.docker "cadvisor" {
+  host = "unix:///var/run/docker.sock"
+
+  // 关键过滤：仅匹配本节点上名为 cadvisor 的容器
+  filter {
+    name   = "name"
+    values = ["cadvisor"] 
+  }
+}
+
+// 2. 抓取指标
+prometheus.scrape "cadvisor" {
+  // 此时 targets 仅包含当前宿主机 Docker 守护进程发现的 cadvisor 容器
+  targets    = discovery.docker.cadvisor.targets
+  forward_to = [prometheus.relabel.cadvisor_relabels.receiver]
+}
+
+
+// 3. 注入节点信息（方便在 Grafana 中区分不同服务器）
+prometheus.relabel "cadvisor_relabels" {
+  forward_to = [prometheus.remote_write.master_prometheus.receiver]
+
+  // 注入宿主机名称，便于在 Swarm 集群中区分
+  rule {
+    replacement  = sys.env("HOSTNAME")
+    target_label = "instance"
+  }
+}

@@ -1,9 +1,3 @@
-discovery.docker "docker" {
-  host             = "unix:///var/run/docker.sock"
-  refresh_interval = "5s"
-}
-
-//----------------- 日志 ⬇️
 discovery.relabel "docker_logs"{
   targets = []
  // 1. 默认提取容器名（作为保底）
@@ -39,42 +33,4 @@ loki.source.docker "docker" {
   targets       = discovery.docker.docker.targets
   relabel_rules = discovery.relabel.docker_logs.rules
   forward_to    = [loki.write.master_loki.receiver]
-}
-//----------------- 日志 ⬆️
-
-prometheus.exporter.unix "unix" {
-    procfs_path = "/host/proc"
-    sysfs_path  = "/host/sys"
-    rootfs_path = "/host/root"
-}
-prometheus.exporter.cadvisor "cadvisor" {
-  docker_host = "unix:///var/run/docker.sock"
-  storage_duration = "5m"
-  docker_only = true
-}
-
-// 抓取并合并所有指标
-prometheus.scrape "docker" {
-    targets = concat(
-        prometheus.exporter.unix.unix.targets,
-        prometheus.exporter.cadvisor.cadvisor.targets,
-    )
-
-    scrape_interval = "10s"
-
-    forward_to = [ prometheus.relabel.docker_relabel.receiver ]
-}
-
-// 为所有指标注入统一的实例标签
-prometheus.relabel "docker_relabel" {
-    rule {
-        target_label = "job"
-        replacement  = "docker"
-    }
-
-    rule {
-        replacement  = sys.env("HOSTNAME")
-        target_label = "instance"
-    }
-    forward_to = [prometheus.remote_write.master_prometheus.receiver]
 }

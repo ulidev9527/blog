@@ -2,6 +2,11 @@ livedebugging {
   enabled = true
 }
 
+discovery.docker "docker" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+}
+
 // prometheus 写入端口
 prometheus.remote_write "master_prometheus" {
     endpoint {
